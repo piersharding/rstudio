@@ -37,55 +37,55 @@ namespace server {
 
 // singleton
 class Options ;
-Options& options();   
-   
+Options& options();
+
 class Options : boost::noncopyable
 {
 private:
    Options() {}
    friend Options& options();
    // COPYING: boost::noncopyable
-   
+
 public:
    virtual ~Options() {}
    core::ProgramStatus read(int argc,
                             char * const argv[],
                             std::ostream& osWarnings);
-   
+
    bool verifyInstallation() const
    {
       return verifyInstallation_;
    }
 
    std::string serverWorkingDir() const
-   { 
+   {
       return std::string(serverWorkingDir_.c_str());
    }
-      
+
    bool serverOffline() const
    {
       return serverOffline_;
    }
-   
+
    std::string serverUser() const
-   { 
+   {
       return std::string(serverUser_.c_str());
    }
-   
+
    bool serverDaemonize() const { return serverDaemonize_; }
 
    bool serverAppArmorEnabled() const { return serverAppArmorEnabled_; }
 
    bool serverSetUmask() const { return serverSetUmask_; }
 
-   // www 
+   // www
    std::string wwwAddress() const
-   { 
-      return std::string(wwwAddress_.c_str()) ; 
+   {
+      return std::string(wwwAddress_.c_str()) ;
    }
-   
+
    std::string wwwPort(bool secure = false) const
-   { 
+   {
       if (!wwwPort_.empty())
       {
          return std::string(wwwPort_.c_str());
@@ -98,10 +98,10 @@ public:
             return std::string("8787");
       }
    }
-   
+
    std::string wwwLocalPath() const
    {
-      return std::string(wwwLocalPath_.c_str()); 
+      return std::string(wwwLocalPath_.c_str());
    }
 
    core::FilePath wwwSymbolMapsPath() const
@@ -113,7 +113,7 @@ public:
    {
       return wwwUseEmulatedStack_;
    }
-   
+
    int wwwThreadPoolSize() const
    {
       return wwwThreadPoolSize_;
@@ -165,6 +165,16 @@ public:
       return std::string(authPamHelperPath_.c_str());
    }
 
+   bool authEnableRemoteUser()
+   {
+      return authEnableRemoteUser_;
+   }
+
+   std::string authSSOSignOutURL() const
+   {
+      return std::string(authSSOSignOutURL_.c_str());
+   }
+
    // rsession
    std::string rsessionWhichR() const
    {
@@ -172,8 +182,8 @@ public:
    }
 
    std::string rsessionPath() const
-   { 
-      return std::string(rsessionPath_.c_str()); 
+   {
+      return std::string(rsessionPath_.c_str());
    }
 
    std::string rldpathPath() const
@@ -185,10 +195,10 @@ public:
    {
       return std::string(rsessionLdLibraryPath_.c_str());
    }
-   
+
    std::string rsessionConfigFile() const
-   { 
-      return std::string(rsessionConfigFile_.c_str()); 
+   {
+      return std::string(rsessionConfigFile_.c_str());
    }
 
    std::string monitorSharedSecret() const
@@ -202,7 +212,7 @@ public:
    }
 
    std::string gwtPrefix() const;
-   
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -271,8 +281,10 @@ private:
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
    std::map<std::string,std::string> overlayOptions_;
+   bool authEnableRemoteUser_;
+   std::string authSSOSignOutURL_;
 };
-      
+
 } // namespace server
 } // namespace rstudio
 

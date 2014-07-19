@@ -163,6 +163,29 @@ void refreshCredentialsThenContinue(
    pConnection->writeResponse();
 }
 
+void setSignInCookies(const core::http::Request& request,
+                      const std::string& username,
+                      bool persist,
+                      core::http::Response* pResponse)
+{
+   boost::optional<boost::gregorian::days> expiry;
+   if (persist)
+      expiry = boost::gregorian::days(3652);
+   else
+      expiry = boost::none;
+
+   auth::secure_cookie::set(kUserId,
+                            username,
+                            request,
+                            boost::posix_time::time_duration(24*3652,
+                                                             0,
+                                                             0,
+                                                             0),
+                            expiry,
+                            std::string(),
+                            pResponse);
+}
+
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
@@ -171,12 +194,76 @@ void signIn(const http::Request& request,
                                "/",
                                pResponse);
 
+   // setup template variables
+   std::string error = request.queryParamValue(kErrorParam);
+
+   // is REMOTE_USER switched on
+  if (server::options().authEnableRemoteUser())
+  {
+    // force the SSO logout
+    std::string logout = request.queryParamValue("SSOLogout");
+    if (!logout.empty())
+    {
+      if (!server::options().authSSOSignOutURL().empty())
+      {
+        pResponse->setMovedTemporarily(request, server::options().authSSOSignOutURL());
+        return;
+      }
+    }
+
+    if (request.containsHeader("X-Remote-User"))
+    {
+      std::string appUri = request.formFieldValue(kAppUri);
+      if (appUri.empty())
+        appUri = "/";
+
+      bool persist = false;
+      std::string username, password;
+      username = request.headerValue("X-Remote-User");
+      password = "";
+
+      onUserUnauthenticated(username);
+
+      if (server::auth::validateUser(username))
+      {
+        if (appUri.size() > 0 && appUri[0] != '/')
+           appUri = "/" + appUri;
+
+        setSignInCookies(request, username, persist, pResponse);
+        pResponse->setMovedTemporarily(request, appUri);
+
+        // register login with monitor
+        using namespace monitor;
+        client().logEvent(Event(kAuthScope,
+                                kAuthLoginEvent,
+                                "",
+                                username));
+
+        onUserAuthenticated(username, password);
+        return;
+      }
+      // username present but does not alidate - check local account created correctly
+      else
+      {
+        if (error.empty())
+        {
+          error = "SSO authentication failed (check valid user)";
+        }
+      }
+    }
+    // X-Remote-User header not set - proxy server configuration incorrect
+    else
+    {
+      error = "SSO authentication failed (check server configuration)";
+    }
+  }
+
+
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
    variables["publicKeyUrl"] = applicationURL(request, kPublicKey);
 
-   // setup template variables
-   std::string error = request.queryParamValue(kErrorParam);
+
    variables[kErrorMessage] = error;
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
    variables[kStaySignedInDisplay] = canStaySignedIn() ? "block" : "none";
@@ -239,8 +326,6 @@ void doSignIn(const http::Request& request,
    std::string appUri = request.formFieldValue(kAppUri);
    if (appUri.empty())
       appUri = "/";
-
-
 
    bool persist = false;
    std::string username, password;
@@ -341,6 +426,17 @@ void signOut(const http::Request& request,
                                kUserId,
                                "/",
                                pResponse);
+
+   if (server::options().authEnableRemoteUser())
+   {
+    if (!server::options().authSSOSignOutURL().empty())
+    {
+       std::string appUri = applicationURL(request, auth::handler::kSignIn);
+       appUri += "?SSOLogout=true";
+      pResponse->setMovedTemporarily(request, appUri);
+      return;
+    }
+   }
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }

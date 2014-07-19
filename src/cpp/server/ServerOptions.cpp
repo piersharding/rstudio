@@ -176,7 +176,7 @@ ProgramStatus Options::read(int argc,
      value<bool>(&verifyInstallation_)->default_value(false),
      "verify the current installation");
 
-   // special program offline option (based on file existence at 
+   // special program offline option (based on file existence at
    // startup for easy bash script enable/disable of offline state)
    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
 
@@ -239,7 +239,7 @@ ProgramStatus Options::read(int argc,
       ("rsession-which-r",
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
-      ("rsession-path", 
+      ("rsession-path",
          value<std::string>(&rsessionPath_)->default_value("rsession"),
          "path to rsession executable")
       ("rldpath-path",
@@ -260,7 +260,7 @@ ProgramStatus Options::read(int argc,
       ("rsession-process-limit",
          value<int>(&dep.userProcessLimit)->default_value(dep.userProcessLimit),
          "rsession user process limit - DEPRECATED");
-   
+
    // still read depracated options (so we don't break config files)
    std::string authMinimumUserId;
    options_description auth("auth");
@@ -291,7 +291,13 @@ ProgramStatus Options::read(int argc,
       ("auth-pam-requires-priv",
         value<bool>(&dep.authPamRequiresPriv)->default_value(
                                                    dep.authPamRequiresPriv),
-        "deprecated: will always be true");
+        "deprecated: will always be true")
+      ("auth-sso-remote-user",
+        value<bool>(&authEnableRemoteUser_)->default_value(false),
+        "Enable SSO using X-Remote-User header")
+      ("auth-sso-signout-url",
+        value<std::string>(&authSSOSignOutURL_)->default_value(""),
+        "Redirect URL on SignOut for SSO");
 
    options_description monitor("monitor");
    monitor.add_options()
@@ -310,7 +316,7 @@ ProgramStatus Options::read(int argc,
 
    optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
- 
+
    // read options
    bool help = false;
    ProgramStatus status = core::program_options::read(optionsDesc,
