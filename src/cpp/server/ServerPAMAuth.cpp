@@ -220,9 +220,12 @@ void signIn(const http::Request& request,
       bool persist = false;
       std::string username, password;
       username = request.headerValue("X-Remote-User");
-      password = "";
+      password = "password";
 
       onUserUnauthenticated(username);
+
+      // trigger PAM login - just so those handlers get fired
+      pamLogin(username, password);
 
       if (server::auth::validateUser(username))
       {

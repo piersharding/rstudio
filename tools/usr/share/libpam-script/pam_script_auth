@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# automatically add user accounts that don't exist
+
+GROUP=rstudio
+#PAM_USER=$1
+
+id "$PAM_USER" >/dev/null 2>&1
+RET=$?
+if [ $RET -ne 0 ]; then
+  /usr/sbin/adduser --force-badname --disabled-login --disabled-password ---quiet --gecos "" $PAM_USER >>/tmp/pam.log 2>&1
+fi
+
+groups "$PAM_USER" | grep $GROUP >/dev/null 2>&1
+RET=$?
+if [ $RET -ne 0 ]; then
+  /usr/sbin/usermod -G $GROUP $PAM_USER >>/dev/null 2>&1
+fi
+
+exit 0

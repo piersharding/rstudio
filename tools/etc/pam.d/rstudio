@@ -1,0 +1,6 @@
+# trigger the auth script that will automatically create missing accounts
+#  see: usr/share/libpam-script/pam_script_auth
+auth required pam_script.so
+auth requisite pam_succeed_if.so uid >= 500 quiet
+#auth required pam_unix.so
+account required pam_unix.so
