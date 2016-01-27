@@ -163,28 +163,53 @@ void refreshCredentialsThenContinue(
    pConnection->writeResponse();
 }
 
+// void setSignInCookies(const core::http::Request& request,
+//                       const std::string& username,
+//                       bool persist,
+//                       core::http::Response* pResponse)
+// {
+//    boost::optional<boost::gregorian::days> expiry;
+//    if (persist)
+//       expiry = boost::gregorian::days(3652);
+//    else
+//       expiry = boost::none;
+
+//    auth::secure_cookie::set(kUserId,
+//                             username,
+//                             request,
+//                             boost::posix_time::time_duration(24*3652,
+//                                                              0,
+//                                                              0,
+//                                                              0),
+//                             expiry,
+//                             std::string(),
+//                             pResponse);
+// }
+
 void setSignInCookies(const core::http::Request& request,
                       const std::string& username,
                       bool persist,
                       core::http::Response* pResponse)
 {
+   int staySignedInDays = server::options().authStaySignedInDays();
    boost::optional<boost::gregorian::days> expiry;
-   if (persist)
-      expiry = boost::gregorian::days(3652);
+   if (persist && canStaySignedIn())
+      expiry = boost::gregorian::days(staySignedInDays);
    else
       expiry = boost::none;
 
    auth::secure_cookie::set(kUserId,
                             username,
                             request,
-                            boost::posix_time::time_duration(24*3652,
+                            boost::posix_time::time_duration(24*staySignedInDays,
                                                              0,
                                                              0,
                                                              0),
                             expiry,
-                            std::string(),
+                            "/",
                             pResponse);
 }
+
 
 void signIn(const http::Request& request,
             http::Response* pResponse)
@@ -299,29 +324,29 @@ void publicKey(const http::Request&,
    pResponse->setContentType("text/plain");
 }
 
-void setSignInCookies(const core::http::Request& request,
-                      const std::string& username,
-                      bool persist,
-                      core::http::Response* pResponse)
-{
-   int staySignedInDays = server::options().authStaySignedInDays();
-   boost::optional<boost::gregorian::days> expiry;
-   if (persist && canStaySignedIn())
-      expiry = boost::gregorian::days(staySignedInDays);
-   else
-      expiry = boost::none;
+// void setSignInCookies(const core::http::Request& request,
+//                       const std::string& username,
+//                       bool persist,
+//                       core::http::Response* pResponse)
+// {
+//    int staySignedInDays = server::options().authStaySignedInDays();
+//    boost::optional<boost::gregorian::days> expiry;
+//    if (persist && canStaySignedIn())
+//       expiry = boost::gregorian::days(staySignedInDays);
+//    else
+//       expiry = boost::none;
 
-   auth::secure_cookie::set(kUserId,
-                            username,
-                            request,
-                            boost::posix_time::time_duration(24*staySignedInDays,
-                                                             0,
-                                                             0,
-                                                             0),
-                            expiry,
-                            "/",
-                            pResponse);
-}
+//    auth::secure_cookie::set(kUserId,
+//                             username,
+//                             request,
+//                             boost::posix_time::time_duration(24*staySignedInDays,
+//                                                              0,
+//                                                              0,
+//                                                              0),
+//                             expiry,
+//                             "/",
+//                             pResponse);
+// }
 
 void doSignIn(const http::Request& request,
               http::Response* pResponse)
